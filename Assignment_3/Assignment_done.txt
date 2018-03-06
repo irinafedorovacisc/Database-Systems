@@ -1,0 +1,114 @@
+
+=======CISC 3810 - Database Systems=====   
+============Assignment 3================
+
+
+CREATE TABLE Boats (
+    prod_id integer NOT NULL,
+    brand text NOT NULL,
+    category text,
+    cost integer NOT NULL,
+    price DECIMAL(10,2)
+);
+ALTER TABLE ONLY Boats
+    ADD CONSTRAINT prk1 PRIMARY KEY (prod_id);
+
+
+
+CREATE TABLE Buyers (
+    cust_id int NOT NULL,
+    fname varchar(55) NOT NULL,
+    lname varchar(55) NOT NULL,
+    city text NOT NULL, 
+    state character(2) NOT NULL, 
+    referrer text NOT NULL,    
+);
+ALTER TABLE ONLY Buyers
+    ADD CONSTRAINT prk2 PRIMARY KEY (cust_id);
+
+
+CREATE TABLE Transactions (
+    trans_id int NOT NULL,
+    cust_id int NOT NULL,
+	prod_id int NOT NULL, 
+	qty int NOT NULL,
+	price DECIMAL(10,2),
+);
+
+
+ALTER TABLE ONLY Transactions
+    ADD CONSTRAINT prk3 PRIMARY KEY (trans_id);
+
+ALTER TABLE ONLY Transactions
+    ADD CONSTRAINT fkey2 FOREIGN KEY (prod_id) REFERENCES Boats(prod_id);
+
+ALTER TABLE ONLY Transactions
+    ADD CONSTRAINT fkey1 FOREIGN KEY (cust_id) REFERENCES Buyers(cust_id);
+
+
+
+
+===============Questions about this data:================================
+=========================================================================
+
+1.  We want to spend some advertising money - where should we spend it?
+        I.e., What is our best referral source of buyers?
+=========================================================================
+SELECT referrer, COUNT(referrer) AS quantity
+FROM Buyers
+GROUP BY referrer;
+=========================================================================
+
+
+2.  Who of our customers has not bought a boat?
+=========================================================================
+SELECT Buyers.lname, Transactions.trans_id
+FROM Buyers
+LEFT JOIN Transactions
+ON Buyers.cust_id = Transactions.cust_id
+WHERE
+    trans_id IS NULL;
+=========================================================================
+
+
+
+3.  Which boats have not sold?
+=========================================================================
+SELECT Boats.brand,Boats.prod_id, Transactions.trans_id
+FROM Boats
+LEFT JOIN Transactions
+ON Boats.prod_id = Transactions.prod_id
+WHERE
+    trans_id IS NULL;
+=========================================================================
+
+
+
+4.  What boat did Alan Weston buy?
+=========================================================================
+SELECT * from Transactions 
+LEFT JOIN Boats on Transactions.prod_id=Boats.prod_id
+LEFT JOIN Buyers on Transactions.cust_id= Buyers.cust_id
+   WHERE
+	 Buyers.fname ='Alan' and Buyers.lname ='Weston';
+=========================================================================
+
+
+
+5.  Who are our VIP customers?
+    I.e., Has anyone bought more than one boat?
+=========================================================================
+SELECT Buyers.lname, count(Transactions.trans_id) as vip
+FROM (Transactions
+INNER JOIN Buyers on Transactions.cust_id=Buyers.cust_id)
+GROUP BY lname
+HAVING COUNT(Transactions.trans_id) > 1;
+=========================================================================
+
+
+
+
+
+
+
+

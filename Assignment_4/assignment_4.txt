@@ -1,0 +1,68 @@
+	
+	CREATE DATABASE HW4;
+	
+	CREATE TABLE fundamentals (
+		ID INTEGER PRIMARY KEY,
+		symbol TEXT,
+		year_ending DATE,
+		cash_equival FLOAT,
+		earnings_before FLOAT,
+		gross_margin FLOAT,
+		net_income FLOAT,
+		total_assets FLOAT,
+		total_liabilities FLOAT,
+		total_revenue FLOAT,
+		year INTEGER,
+		earnings_per_share FLOAT,
+		share_outstandidng FLOAT
+	);
+	CREATE TABLE prices (
+		date DATE, 
+		symbol TEXT,
+		open FLOAT,
+		close FLOAT,
+		low FLOAT,
+		high FLOAT,
+		volume INTEGER
+	);
+	CREATE TABLE securities (
+		Symbol TEXT,
+		Company TEXT,
+		Sector TEXT,
+		sub_industry TEXT,
+		initial_date DATE
+	);
+
+	CREATE TABLE year_end_prices AS   	  
+		  SELECT symbol, tdate, close
+		  FROM prices 
+		  WHERE tdate::text LIKE '%-12-31'      
+			  OR tdate::text LIKE '2011-12-30'     
+		  ORDER BY symbol, tdate
+		  ;
+
+
+	CREATE TABLE for_calc AS 
+		SELECT *,
+			LAG(close) OVER (PARTITION BY symbol ORDER BY tdate) AS prev_yr_close
+			FROM year_end_prices
+			; 
+
+	
+	CREATE TABLE awesome_performers_init AS
+		SELECT symbol, tdate,((close)/(prev_yr_close) - 1)*100 
+				as return 
+			FROM for_calc
+			WHERE prev_yr_close IS NOT NULL
+			ORDER BY return DESC LIMIT 34
+			;
+
+	CREATE TABLE awesome_performers AS 
+		SELECT securities.Company, awesome_performers_init. symbol, awesome_performers_init.tdate,awesome_performers_init.return
+			FROM awesome_performers_init
+				LEFT JOIN securities 
+					ON awesome_performers_init.symbol = securities.Symbol
+			;
+
+	
+	DROP ALL unnecessary tables: awesome_performers_init, for_calc

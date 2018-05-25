@@ -1,0 +1,34 @@
+CREATE TABLE population(
+   zip_code  INT,
+   total_population  FLOAT,
+   median_age FLOAT,
+   total_males INT,
+   total_females INT,
+   households  FLOAT,
+   household_ave_size  FLOAT
+);
+
+CREATE TABLE males AS
+     SELECT zip_code, median_age, household_ave_size, cast(total_males as float)/nullif(cast (total_population as float), 0)
+      AS male_percentage 
+     FROM population;
+
+CREATE TABLE target AS
+    SELECT zip_code, median_age, household_ave_size,  cast(total_males as float)/nullif(cast (total_population as float), 0)
+    AS male_percentage_high FROM population
+    WHERE zip_code = '93591';
+
+CREATE TABLE distance as
+    SELECT p.zip_code, sqrt(((p.median_age)-(t.median_age))^2 +((p.household_ave_size)-(t.household_ave_size))^2+((p.male_percentage )-(t.male_percentage_high ))^2) as distance
+    FROM males p CROSS JOIN target t;
+
+CREATE TABLE top10zips as
+    SELECT zip_code, distance from distance
+    WHERE distance is not null
+    ORDER BY distance 
+    LIMIT 11;
+
+SELECT p.zip_code, p.median_age, p.total_males,p.total_population, t.distance
+FROM population p  
+JOIN top10zips t ON p.zip_code = t.zip_code;
+
